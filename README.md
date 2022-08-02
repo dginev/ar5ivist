@@ -39,5 +39,6 @@ Note that Docker will not be able to escape from the current directory from whic
 If the installation has succeeded, the ar5ivist run of LaTeXML will produce a log file under the `.latexml.log` extension. For `main.tex`, that would be `main.latexml.log`.
 
 While latexml Warnings generally do not harm the fidelity of the HTML5 document, `Error` and `Fatal` reports do, and should ideally be avoided.
-In cases where you find troubleshooting an ar5ivist too obscure, please let us know by [opening a new issue](https://github.com/dginev/ar5ivist/issues).
+In cases where you find troubleshooting a conversion run too obscure, please let us know by [opening a new issue](https://github.com/dginev/ar5ivist/issues).
+
 We should be able to provide some support, and eventually make the reporting interface more convenient.
