@@ -9,7 +9,7 @@ Use the published dockerhub image (under a Unix OS) as:
 ```bash
 $ docker run -v "$(pwd)":/docdir -w /docdir \
              --user "$(id -u):$(id -g)" \
-             dginev/ar5ivist --source=main.tex --destination=html/main.html
+             latexml/ar5ivist --source=main.tex --destination=html/main.html
 ```
 
 ## Local Build
