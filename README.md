@@ -1,6 +1,7 @@
 # ar5ivist
 
-A turnkey command for converting a LaTeX source to ar5iv-style HTML
+A turnkey command for converting a LaTeX source to ar5iv-style HTML, via LaTeXML.
+
 
 ## Recommended Build
 
@@ -9,8 +10,11 @@ Use the published dockerhub image (under a Unix OS) as:
 ```bash
 $ docker run -v "$(pwd)":/docdir -w /docdir \
              --user "$(id -u):$(id -g)" \
-             latexml/ar5ivist --source=main.tex --destination=html/main.html
+             latexml/ar5ivist:2208.01 --source=main.tex --destination=html/main.html
 ```
+
+Grab a tea or coffee: the average conversion of an arXiv document today takes ~2 minutes, but ar5iv uses a max timeout of upto ~45 minutes.
+
 
 ## Local Build
 
