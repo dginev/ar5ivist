@@ -10,7 +10,7 @@ Use the published dockerhub image (under a Unix OS) as:
 ```bash
 $ docker run -v "$(pwd)":/docdir -w /docdir \
              --user "$(id -u):$(id -g)" \
-             latexml/ar5ivist:2208.01 --source=main.tex --destination=html/main.html
+             latexml/ar5ivist:2301.01 --source=main.tex --destination=html/main.html
 ```
 
 Grab a tea or coffee: the average conversion of an arXiv document today takes ~2 minutes, but ar5iv uses a max timeout of upto ~45 minutes.
