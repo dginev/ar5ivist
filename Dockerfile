@@ -58,17 +58,17 @@ RUN set -ex && apt-get update -qq && apt-get install -qy \
 RUN eval $(perl -I$HOME/perl5/lib -Mlocal::lib)
 RUN echo 'eval "$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)"' >> ~/.bashrc
 
-# Collect the extended arxmliv-bindings files
-ENV ARXMLIV_BINDINGS_COMMIT=ccbd5f96bfb28d25ee2625dbb1c96eaa1f0ebb8e
-RUN rm -rf /opt/arxmliv-bindings
-RUN git clone https://github.com/dginev/arxmliv-bindings /opt/arxmliv-bindings
-WORKDIR /opt/arxmliv-bindings
-RUN git reset --hard $ARXMLIV_BINDINGS_COMMIT
+# Collect the extended ar5iv-bindings files
+ENV AR5IV_BINDINGS_COMMIT=cc02d684af394b3f413c825d752138a7fc0810d1
+RUN rm -rf /opt/ar5iv-bindings
+RUN git clone https://github.com/dginev/ar5iv-bindings /opt/ar5iv-bindings
+WORKDIR /opt/ar5iv-bindings
+RUN git reset --hard $AR5IV_BINDINGS_COMMIT
 
 # Install LaTeXML, at a fixed commit, via cpanminus
 RUN mkdir -p /opt/latexml
 WORKDIR /opt/latexml
-ENV LATEXML_COMMIT=bd776d49f17cd805a9788f7b39dddf93b69ea45d
+ENV LATEXML_COMMIT=2bfdaf26ab73aea95e210f044762dd4891855b47
 RUN cpanm --notest --verbose https://github.com/brucemiller/LaTeXML/tarball/$LATEXML_COMMIT
 
 # Enable imagemagick policy permissions for work with arXiv PDF/EPS files
@@ -90,10 +90,11 @@ ENV TMPDIR=/dev/shm
 
 # continue as instructed in https://www.howtogeek.com/devops/how-to-use-docker-to-package-cli-applications/
 ENTRYPOINT ["latexmlc", \
-  "--preload=[nobibtex,ids,localrawstyles,mathlexemes,magnify=2,zoomout=2,tokenlimit=99999999,iflimit=1499999,absorblimit=1299999,pushbacklimit=599999]latexml.sty", \
-  "--path=/opt/arxmliv-bindings/bindings", \
-  "--path=/opt/arxmliv-bindings/supported_originals", \
+  "--preload=[nobibtex,ids,localrawstyles,mathlexemes,nobreakuntex,magnify=2,zoomout=2,tokenlimit=99999999,iflimit=1499999,absorblimit=1299999,pushbacklimit=599999]latexml.sty", \
+  "--preload=ar5iv.sty", \
+  "--path=/opt/ar5iv-bindings/bindings", \
+  "--path=/opt/ar5iv-bindings/supported_originals", \
   "--format=html5","--pmml","--cmml","--mathtex", \
   "--timeout=2700", \
-  "--nodefaultresources","--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.7.4/css/ar5iv.min.css"]
+  "--nodefaultresources","--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.7.6/css/ar5iv.min.css"]
 CMD ["--source=main.tex", "--dest=main.html"]
