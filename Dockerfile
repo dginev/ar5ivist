@@ -90,7 +90,7 @@ ENV TMPDIR=/dev/shm
 
 # continue as instructed in https://www.howtogeek.com/devops/how-to-use-docker-to-package-cli-applications/
 ENTRYPOINT ["latexmlc", \
-  "--preload=[nobibtex,ids,localrawstyles,mathlexemes,nobreakuntex,magnify=2,zoomout=2,tokenlimit=99999999,iflimit=1499999,absorblimit=1299999,pushbacklimit=599999]latexml.sty", \
+  "--preload=[nobibtex,ids,localrawstyles,nobreakuntex,magnify=2,zoomout=2,tokenlimit=99999999,iflimit=1499999,absorblimit=1299999,pushbacklimit=599999]latexml.sty", \
   "--preload=ar5iv.sty", \
   "--path=/opt/ar5iv-bindings/bindings", \
   "--path=/opt/ar5iv-bindings/supported_originals", \
