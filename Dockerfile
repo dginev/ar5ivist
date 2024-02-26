@@ -59,7 +59,7 @@ RUN eval $(perl -I$HOME/perl5/lib -Mlocal::lib)
 RUN echo 'eval "$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)"' >> ~/.bashrc
 
 # Collect the extended ar5iv-bindings files
-ENV AR5IV_BINDINGS_COMMIT=a12a44117b6b7315908d3eb6122f818d7a21390c
+ENV AR5IV_BINDINGS_COMMIT=31337a41074d36750987824b7369ef9e215c4df4
 RUN rm -rf /opt/ar5iv-bindings
 RUN git clone https://github.com/dginev/ar5iv-bindings /opt/ar5iv-bindings
 WORKDIR /opt/ar5iv-bindings
@@ -68,7 +68,7 @@ RUN git reset --hard $AR5IV_BINDINGS_COMMIT
 # Install LaTeXML, at a fixed commit, via cpanminus
 RUN mkdir -p /opt/latexml
 WORKDIR /opt/latexml
-ENV LATEXML_COMMIT=2bfdaf26ab73aea95e210f044762dd4891855b47
+ENV LATEXML_COMMIT=ae2c8b266d1aa04af4350a64c79215bbe4b7c482
 RUN cpanm --notest --verbose https://github.com/brucemiller/LaTeXML/tarball/$LATEXML_COMMIT
 
 # Enable imagemagick policy permissions for work with arXiv PDF/EPS files
@@ -90,11 +90,14 @@ ENV TMPDIR=/dev/shm
 
 # continue as instructed in https://www.howtogeek.com/devops/how-to-use-docker-to-package-cli-applications/
 ENTRYPOINT ["latexmlc", \
-  "--preload=[nobibtex,ids,localrawstyles,nobreakuntex,magnify=2,zoomout=2,tokenlimit=99999999,iflimit=1499999,absorblimit=1299999,pushbacklimit=599999]latexml.sty", \
+  "--preload=[nobibtex,ids,localrawstyles,nobreakuntex,magnify=1.8,zoomout=1.8,tokenlimit=249999999,iflimit=3599999,absorblimit=1299999,pushbacklimit=599999]latexml.sty", \
   "--preload=ar5iv.sty", \
   "--path=/opt/ar5iv-bindings/bindings", \
   "--path=/opt/ar5iv-bindings/supported_originals", \
   "--format=html5","--pmml","--cmml","--mathtex", \
   "--timeout=2700", \
-  "--nodefaultresources","--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.7.6/css/ar5iv.min.css"]
+  "--noinvisibletimes", "--nodefaultresources", \
+  "--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.7.9/css/ar5iv.min.css",\
+  "--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.7.9/css/ar5iv-fonts.min.css"]
+
 CMD ["--source=main.tex", "--dest=main.html"]
