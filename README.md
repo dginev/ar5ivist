@@ -10,7 +10,7 @@ Use the published dockerhub image (under a Unix OS) as:
 ```bash
 $ docker run -v "$(pwd)":/docdir -w /docdir \
              --user "$(id -u):$(id -g)" \
-             latexml/ar5ivist:2301.01 --source=main.tex --destination=html/main.html
+             latexml/ar5ivist:2402.29 --source=main.tex --destination=html/main.html
 ```
 
 Grab a tea or coffee: the average conversion of an arXiv document today takes ~2 minutes, but ar5iv uses a max timeout of upto ~45 minutes.
@@ -20,6 +20,9 @@ Grab a tea or coffee: the average conversion of an arXiv document today takes ~2
 
 build with:
 ```bash
+$ cd ar5ivist-base
+$ docker build --tag ar5ivist-base:latest .
+$ cd ../ar5ivist
 $ docker build --tag ar5ivist:latest .
 ```
 
@@ -33,6 +36,11 @@ $ docker run -v "$(pwd)":/docdir -w /docdir \
 where `main.tex` is the name of your main document source, and `html/main.html` names the HTML5 destination file, with  an (optional) destination directory.
 
 Note that Docker will not be able to escape from the current directory from which you are running the command, so paths using a leading `../` will not work.
+
+## Container Customization
+
+The `ar5ivist-base` Dockerfile was extracted for easy customization in downstream Dockerfiles. The new `ar5ivist` Dockerfile is a thin wrapper over the base container.
+You can follow that example to create your own Dockerfile, with additional dependencies, or completely reconfigured LaTeXML setup.
 
 ## Troubleshooting
 

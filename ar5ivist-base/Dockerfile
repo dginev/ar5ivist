@@ -1,10 +1,10 @@
-## Dockerfile for ar5ivist, using a fixed LaTeXML commit
+## Dockerfile for ar5ivist-base, using a fixed LaTeXML commit
 ##
 ## build with
 ##
-## $ docker build --tag ar5ivist:latest .
+## $ docker build --tag ar5ivist-base:latest .
 ##
-## run with
+## run with the main ar5ivist Dockerfile:
 ##
 ## $ docker run -v "$(pwd)":/docdir -w /docdir \
 ##              --user "$(id -u):$(id -g)" \
@@ -87,17 +87,3 @@ ENV MAGICK_MAP_LIMIT=1GiB
 ENV MAGICK_TIME_LIMIT=900
 ENV MAGICK_TMPDIR=/dev/shm
 ENV TMPDIR=/dev/shm
-
-# continue as instructed in https://www.howtogeek.com/devops/how-to-use-docker-to-package-cli-applications/
-ENTRYPOINT ["latexmlc", \
-  "--preload=[nobibtex,ids,localrawstyles,nobreakuntex,magnify=1.8,zoomout=1.8,tokenlimit=249999999,iflimit=3599999,absorblimit=1299999,pushbacklimit=599999]latexml.sty", \
-  "--preload=ar5iv.sty", \
-  "--path=/opt/ar5iv-bindings/bindings", \
-  "--path=/opt/ar5iv-bindings/supported_originals", \
-  "--format=html5","--pmml","--cmml","--mathtex", \
-  "--timeout=2700", \
-  "--noinvisibletimes", "--nodefaultresources", \
-  "--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.7.9/css/ar5iv.min.css",\
-  "--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.7.9/css/ar5iv-fonts.min.css"]
-
-CMD ["--source=main.tex", "--dest=main.html"]
