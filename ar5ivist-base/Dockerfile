@@ -46,9 +46,8 @@ RUN set -ex && apt-get update -qq && apt-get install -qy \
   libwww-perl \
   libxml-libxml-perl \
   libxml-libxslt-perl \
-  libxml2 libxml2-dev \
+  libxml2-dev \
   libxslt1-dev \
-  libxslt1.1 \
   liblocal-lib-perl \
   make \
   perl-doc \
@@ -59,7 +58,7 @@ RUN eval $(perl -I$HOME/perl5/lib -Mlocal::lib)
 RUN echo 'eval "$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)"' >> ~/.bashrc
 
 # Collect the extended ar5iv-bindings files
-ENV AR5IV_BINDINGS_COMMIT=31337a41074d36750987824b7369ef9e215c4df4
+ENV AR5IV_BINDINGS_COMMIT=5bd5cf030c667f4d29dd48d8cfd5874499e4491c
 RUN rm -rf /opt/ar5iv-bindings
 RUN git clone https://github.com/dginev/ar5iv-bindings /opt/ar5iv-bindings
 WORKDIR /opt/ar5iv-bindings
@@ -68,8 +67,8 @@ RUN git reset --hard $AR5IV_BINDINGS_COMMIT
 # Install LaTeXML, at a fixed commit, via cpanminus
 RUN mkdir -p /opt/latexml
 WORKDIR /opt/latexml
-ENV LATEXML_COMMIT=ae2c8b266d1aa04af4350a64c79215bbe4b7c482
-RUN cpanm --notest --verbose https://github.com/brucemiller/LaTeXML/tarball/$LATEXML_COMMIT
+ENV LATEXML_COMMIT=5e47b3b13a386826581a31464083086520ca2817
+RUN cpanm --notest --verbose https://github.com/brucemiller/LaTeXML/archive/${LATEXML_COMMIT}.zip
 
 # Enable imagemagick policy permissions for work with arXiv PDF/EPS files
 RUN perl -pi.bak -e 's/rights="none" pattern="([XE]?PS\d?|PDF)"/rights="read|write" pattern="$1"/g' /etc/ImageMagick-6/policy.xml
@@ -85,5 +84,5 @@ ENV MAGICK_DISK_LIMIT=2GiB
 ENV MAGICK_MEMORY_LIMIT=512MiB
 ENV MAGICK_MAP_LIMIT=1GiB
 ENV MAGICK_TIME_LIMIT=900
-ENV MAGICK_TMPDIR=/dev/shm
-ENV TMPDIR=/dev/shm
+ENV MAGICK_TMPDIR=/tmp
+ENV TMPDIR=/tmp

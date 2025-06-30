@@ -12,18 +12,18 @@
 ##              --user "$(id -u):$(id -g)" \
 ##              ar5ivist:latest --source=main.tex --destination=html/main.html
 
-FROM ar5ivist-base
+FROM ar5ivist-base:latest
 
 # continue as instructed in https://www.howtogeek.com/devops/how-to-use-docker-to-package-cli-applications/
 ENTRYPOINT ["latexmlc", \
-  "--preload=[nobibtex,ids,localrawstyles,nobreakuntex,magnify=1.8,zoomout=1.8,tokenlimit=249999999,iflimit=3599999,absorblimit=1299999,pushbacklimit=599999]latexml.sty", \
+  "--preload=[nobibtex,localrawstyles,nobreakuntex,magnify=1.2,zoomout=1.2,tokenlimit=249999999,iflimit=3599999,absorblimit=1299999,pushbacklimit=599999]latexml.sty", \
   "--preload=ar5iv.sty", \
   "--path=/opt/ar5iv-bindings/bindings", \
   "--path=/opt/ar5iv-bindings/supported_originals", \
-  "--format=html5","--pmml","--cmml","--mathtex", \
+  "--format=html5","--pmml","--mathtex", \
   "--timeout=2700", \
   "--noinvisibletimes", "--nodefaultresources", \
-  "--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.7.9/css/ar5iv.min.css",\
-  "--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.7.9/css/ar5iv-fonts.min.css"]
+  "--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.8.1/css/ar5iv.min.css",\
+  "--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.8.1/css/ar5iv-fonts.min.css"]
 
 CMD ["--source=main.tex", "--dest=main.html"]
