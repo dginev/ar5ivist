@@ -67,8 +67,8 @@ RUN git reset --hard $AR5IV_BINDINGS_COMMIT
 # Install LaTeXML, at a fixed commit, via cpanminus
 RUN mkdir -p /opt/latexml
 WORKDIR /opt/latexml
-ENV LATEXML_COMMIT=5e47b3b13a386826581a31464083086520ca2817
-RUN cpanm --notest --verbose https://github.com/brucemiller/LaTeXML/archive/${LATEXML_COMMIT}.zip
+ENV LATEXML_COMMIT=b0c61850a6611abc2418023c6216e5449ad8167f
+RUN cpanm --notest --verbose --build-args formats https://github.com/brucemiller/LaTeXML/archive/${LATEXML_COMMIT}.zip
 
 # Enable imagemagick policy permissions for work with arXiv PDF/EPS files
 RUN perl -pi.bak -e 's/rights="none" pattern="([XE]?PS\d?|PDF)"/rights="read|write" pattern="$1"/g' /etc/ImageMagick-6/policy.xml
