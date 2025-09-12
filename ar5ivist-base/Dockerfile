@@ -10,7 +10,7 @@
 ##              --user "$(id -u):$(id -g)" \
 ##              ar5ivist:latest --source=main.tex --destination=html/main.html
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # Install the texlive toolchain first (v2021 in Ubuntu 22.04)
 # as it largely stays constant in the background.
@@ -58,7 +58,7 @@ RUN eval $(perl -I$HOME/perl5/lib -Mlocal::lib)
 RUN echo 'eval "$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)"' >> ~/.bashrc
 
 # Collect the extended ar5iv-bindings files
-ENV AR5IV_BINDINGS_COMMIT=5bd5cf030c667f4d29dd48d8cfd5874499e4491c
+ENV AR5IV_BINDINGS_COMMIT=940ef38c88c813196972e9abd9acd265bf44d98e
 RUN rm -rf /opt/ar5iv-bindings
 RUN git clone https://github.com/dginev/ar5iv-bindings /opt/ar5iv-bindings
 WORKDIR /opt/ar5iv-bindings
@@ -67,7 +67,7 @@ RUN git reset --hard $AR5IV_BINDINGS_COMMIT
 # Install LaTeXML, at a fixed commit, via cpanminus
 RUN mkdir -p /opt/latexml
 WORKDIR /opt/latexml
-ENV LATEXML_COMMIT=b0c61850a6611abc2418023c6216e5449ad8167f
+ENV LATEXML_COMMIT=25ec2b0e9070cc05cbb5e5e22bebf5ba98a0d86c
 RUN cpanm --notest --verbose --build-args formats https://github.com/brucemiller/LaTeXML/archive/${LATEXML_COMMIT}.zip
 
 # Enable imagemagick policy permissions for work with arXiv PDF/EPS files
