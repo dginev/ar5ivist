@@ -16,7 +16,7 @@ FROM ar5ivist-base:latest
 
 # continue as instructed in https://www.howtogeek.com/devops/how-to-use-docker-to-package-cli-applications/
 ENTRYPOINT ["latexmlc", \
-  "--preload=[nobibtex,localrawstyles,nobreakuntex,magnify=1.3,zoomout=1.3,tokenlimit=249999999,iflimit=3599999,absorblimit=1299999,pushbacklimit=599999]latexml.sty", \
+  "--preload=[nobibtex,rawstyles,nobreakuntex,magnify=1.3,zoomout=1.3,tokenlimit=249999999,iflimit=3599999,absorblimit=1299999,pushbacklimit=599999]latexml.sty", \
   "--preload=ar5iv.sty", \
   "--path=/opt/ar5iv-bindings/bindings", \
   "--path=/opt/ar5iv-bindings/supported_originals", \
