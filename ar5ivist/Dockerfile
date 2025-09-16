@@ -23,7 +23,7 @@ ENTRYPOINT ["latexmlc", \
   "--format=html5","--pmml","--mathtex", \
   "--timeout=2700", \
   "--noinvisibletimes", "--nodefaultresources", \
-  "--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.8.3/css/ar5iv.min.css",\
-  "--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.8.3/css/ar5iv-fonts.min.css"]
+  "--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.8.4/css/ar5iv.min.css",\
+  "--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.8.4/css/ar5iv-fonts.min.css"]
 
 CMD ["--source=main.tex", "--dest=main.html"]
