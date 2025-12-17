@@ -58,7 +58,7 @@ RUN eval $(perl -I$HOME/perl5/lib -Mlocal::lib)
 RUN echo 'eval "$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)"' >> ~/.bashrc
 
 # Collect the extended ar5iv-bindings files
-ENV AR5IV_BINDINGS_COMMIT=847b4835448d17065d612c04b52c4a373ec0fd15
+ENV AR5IV_BINDINGS_COMMIT=31cd414724679cbb4bf9aa77505e40042ed2c537
 RUN rm -rf /opt/ar5iv-bindings
 RUN git clone https://github.com/dginev/ar5iv-bindings /opt/ar5iv-bindings
 WORKDIR /opt/ar5iv-bindings
@@ -67,8 +67,8 @@ RUN git reset --hard $AR5IV_BINDINGS_COMMIT
 # Install LaTeXML, at a fixed commit, via cpanminus
 RUN mkdir -p /opt/latexml
 WORKDIR /opt/latexml
-ENV LATEXML_COMMIT=25ec2b0e9070cc05cbb5e5e22bebf5ba98a0d86c
-RUN cpanm --notest --verbose --build-args formats https://github.com/brucemiller/LaTeXML/archive/${LATEXML_COMMIT}.zip
+ENV LATEXML_COMMIT=b36bda7e6a677f5e232ec85eaef73c338e56669a
+RUN cpanm --notest --verbose --build-args formats https://github.com/arXiv/LaTeXML/archive/${LATEXML_COMMIT}.zip
 
 # Enable imagemagick policy permissions for work with arXiv PDF/EPS files
 RUN perl -pi.bak -e 's/rights="none" pattern="([XE]?PS\d?|PDF)"/rights="read|write" pattern="$1"/g' /etc/ImageMagick-6/policy.xml
