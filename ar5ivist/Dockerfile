@@ -1,4 +1,4 @@
-## Dockerfile for ar5ivist, using a fixed LaTeXML commit
+## Dockerfile for ar5ivist, on a released latexml-oxide (see ../ar5ivist-base)
 ##
 ## build with
 ## $ cd ar5ivist-base
@@ -14,15 +14,23 @@
 
 FROM ar5ivist-base:latest
 
+# A `<package>.sty.rhai` beside a source is a runtime binding latexml-oxide loads; for
+# arXiv sources, which are other people's, it may not run programs (README "Trust").
+ENV LATEXML_DISABLE_SHELL_ESCAPE=1
+
+# The ar5iv profile, as arXiv's ar5iv conversions run it: ar5iv.sty preloaded (it
+# loads latexml.sty and the ar5iv configuration), HTML5 with presentation MathML and
+# the TeX of each formula, no invisible-times operators, and the stylesheet bundled
+# in the release binary (ar5iv.css, written beside the page). A generous timeout for
+# local use; arXiv's own runs are shorter. The second stylesheet is ar5iv's webfonts,
+# linked from the CDN as the Perl-based ar5ivist did.
 # continue as instructed in https://www.howtogeek.com/devops/how-to-use-docker-to-package-cli-applications/
-ENTRYPOINT ["latexmlc", \
+ENTRYPOINT ["latexml_oxide", \
   "--preload=ar5iv.sty", \
-  "--path=/opt/ar5iv-bindings/bindings", \
-  "--path=/opt/ar5iv-bindings/supported_originals", \
-  "--format=html5","--pmml","--mathtex", \
+  "--format=html5", "--pmml", "--mathtex", \
   "--timeout=2700", \
   "--noinvisibletimes", \
-  "--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.8.4/css/ar5iv.min.css",\
-  "--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.8.4/css/ar5iv-fonts.min.css"]
+  "--css=ar5iv.css", "--nodefaultresources", \
+  "--css=https://cdn.jsdelivr.net/gh/dginev/ar5iv-css@0.9.6/css/ar5iv-fonts.min.css"]
 
 CMD ["--source=main.tex", "--dest=main.html"]
