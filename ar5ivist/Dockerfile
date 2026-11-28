@@ -22,11 +22,12 @@ ENV LATEXML_DISABLE_SHELL_ESCAPE=1
 # loads latexml.sty and the ar5iv configuration), HTML5 with presentation MathML and
 # the TeX of each formula, no invisible-times operators, and the stylesheet bundled
 # in the release binary (ar5iv.css, written beside the page). A generous timeout for
-# local use; arXiv's own runs are shorter. The second stylesheet is ar5iv's webfonts,
-# linked from the CDN as the Perl-based ar5ivist did.
+# local use (45 minutes). The second stylesheet is ar5iv's webfonts, linked from the
+# CDN as the Perl-based ar5ivist did; keep its version the ar5iv-css release the
+# latexml-oxide release bundles (0.9.6 for 0.8.0).
 # continue as instructed in https://www.howtogeek.com/devops/how-to-use-docker-to-package-cli-applications/
 # tini as PID 1: see ar5ivist-base (figure conversion fails when latexml_oxide is PID 1).
-ENTRYPOINT ["/usr/bin/tini", "--", "latexml_oxide", \
+ENTRYPOINT ["/usr/bin/tini", "-s", "--", "latexml_oxide", \
   "--preload=ar5iv.sty", \
   "--format=html5", "--pmml", "--mathtex", \
   "--timeout=2700", \

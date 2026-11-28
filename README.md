@@ -50,8 +50,12 @@ You can follow that example to create your own Dockerfile, with additional depen
 with MathML, and the release's bundled `ar5iv.css`).
 
 The base image carries the TeX kernel formats prebuilt for its own TeX Live tree. A derived image that changes that
-tree (another TeX Live, an updated `latex.ltx`) should re-run the base's two `latexml_oxide --init` lines into
-`$LATEXML_DUMP_DIR`; otherwise each run builds the format again (about 10 seconds).
+tree (another TeX Live, an updated `latex.ltx`) should rebuild them where `$LATEXML_DUMP_DIR` points, since `--init`
+writes into `resources/dumps` under the current directory:
+`RUN cd /usr/local/share/latexml-oxide && latexml_oxide --init=plain.tex && latexml_oxide --init=latex.ltx`.
+Otherwise each run builds the format again (about 10 seconds). A derived image that sets its own `ENTRYPOINT` should
+keep `/usr/bin/tini -s --` in front of `latexml_oxide`: run as the container's first process, latexml-oxide 0.8.0
+cannot convert figures.
 
 ## Trust
 

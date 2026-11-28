@@ -63,7 +63,9 @@ RUN set -e; d=/usr/local/share/doc/ar5ivist; mkdir -p "$d"; \
     [ "$(wc -l < /tmp/srcpkgs)" -eq 3 ]; rm -f /tmp/srcpkgs; cat "$d/THIRD-PARTY-SOURCES"
 
 # latexml-oxide, from its GitHub release: the .deb for this architecture, checked
-# against the release's SHA-256 file. The binary is self-contained (kernel dumps for
+# against the release's SHA-256 file; its notices kept (Ubuntu's image drops
+# /usr/share/doc/* but copyright, and THIRD-PARTY-NOTICES is the statically linked
+# libraries' licence record). The binary is self-contained (kernel dumps for
 # TeX Live 2022-2026, the XSLT, the RelaxNG schema and ar5iv.css are embedded).
 ARG LATEXML_OXIDE_VERSION=0.8.0
 ARG TARGETARCH
@@ -75,15 +77,15 @@ RUN set -ex \
  && curl -fsSL -o "$deb" "$base/$deb" \
  && curl -fsSL -o "$deb.sha256" "$base/$deb.sha256" \
  && sha256sum -c "$deb.sha256" \
+ && echo 'path-include=/usr/share/doc/latexml-oxide/*' > /etc/dpkg/dpkg.cfg.d/latexml-oxide \
  && apt-get update -qq \
  && apt-get install -qy --no-install-recommends "./$deb" \
  && rm -f "$deb" "$deb.sha256" \
  && rm -rf /var/lib/apt/lists/* \
  && latexml_oxide --version
 
-# Let ImageMagick read/write PDF/EPS and raise its resource ceilings: arXiv figures
-# need it (Ubuntu's default policy.xml blocks PDF/EPS). The same patch as
-# latexml-oxide's images.
+# Let ImageMagick read/write PS/EPS/PDF where a policy.xml blocks them, and raise its
+# resource ceilings for large arXiv figures. The same patch as latexml-oxide's images.
 RUN set -e; P=/etc/ImageMagick-6/policy.xml; if [ -f "$P" ]; then \
       sed -i -E 's/rights="none" pattern="([XE]?PS[0-9]?|PDF)"/rights="read|write" pattern="\1"/g' "$P"; \
       sed -i -E 's/(name="width" value=)"[^"]*"/\1"256KP"/'  "$P"; \
@@ -113,16 +115,27 @@ RUN set -ex \
  && ls -la resources/dumps/*.dump.txt
 
 # Build-time self-test: an ar5iv-style conversion must succeed, read the baked latex
-# format, and write the bundled ar5iv.css beside the page, or the image is not built.
+# format, convert an EPS figure, and write the bundled ar5iv.css beside the page, and
+# the licence notices must be installed, or the image is not built.
 RUN set -ex \
+ && test -s /usr/share/doc/latexml-oxide/THIRD-PARTY-NOTICES \
  && mkdir -p /tmp/selftest && cd /tmp/selftest \
- && printf '\\documentclass{article}\n\\begin{document}\nHello from ar5ivist, $x^2$.\n\\end{document}\n' > main.tex \
+ && printf '%s\n' '%!PS-Adobe-3.0 EPSF-3.0' '%%BoundingBox: 0 0 72 36' '0 0 1 setrgbcolor 0 0 72 36 rectfill' 'showpage' > fig.eps \
+ && printf '\\documentclass{article}\n\\usepackage{graphicx}\n\\begin{document}\nHello from ar5ivist, $x^2$.\n\\includegraphics{fig.eps}\n\\end{document}\n' > main.tex \
  && latexml_oxide --preload=ar5iv.sty --format=html5 --pmml --mathtex --noinvisibletimes \
       --css=ar5iv.css --nodefaultresources --source=main.tex --dest=html/main.html \
  && grep -q 'Hello from ar5ivist' html/main.html \
  && grep -q '<math' html/main.html \
  && test -s html/ar5iv.css \
+ && test -s html/fig.png \
  && grep -q "from $LATEXML_DUMP_DIR/latex\." main.latexml.log \
  && cd / && rm -rf /tmp/selftest
 
 ENV TMPDIR=/tmp
+
+# tini as PID 1 (`-s`: a subreaper too, when something else is PID 1 under `docker run
+# --init`): latexml-oxide 0.8.0's image converters refuse to start when their parent is
+# PID 1, so `latexml_oxide` must not be the container's first process. A derived image
+# that sets its own ENTRYPOINT keeps tini in front of latexml_oxide.
+ENTRYPOINT ["/usr/bin/tini", "-s", "--"]
+CMD ["bash"]
