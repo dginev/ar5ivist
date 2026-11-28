@@ -1,8 +1,11 @@
-## Dockerfile for ar5ivist-base, using a fixed LaTeXML commit
+## Dockerfile for ar5ivist-base: TeX Live + a released latexml-oxide
 ##
 ## build with
 ##
 ## $ docker build --tag ar5ivist-base:latest .
+##
+## (another release: --build-arg LATEXML_OXIDE_VERSION=X.Y.Z, with its .deb's SHA-256
+##  checked against the release's own .sha256 file)
 ##
 ## run with the main ar5ivist Dockerfile:
 ##
@@ -12,11 +15,16 @@
 
 FROM ubuntu:24.04
 
-# Install the texlive toolchain first (v2021 in Ubuntu 22.04)
-# as it largely stays constant in the background.
-ENV DEBIAN_FRONTEND=noninteractive
-RUN set -ex && apt-get update -qq && apt-get install -qy --no-install-recommends tzdata
-RUN set -ex && apt-get update -qq && apt-get install -qy \
+# The TeX Live toolchain first (TeX Live 2023 in Ubuntu 24.04), as it largely stays
+# constant in the background. latexml-oxide reads the texmf tree through kpathsea at
+# convert time, so the full arXiv-capable set matters for the long tail of packages
+# and fonts. This is the same set and the same graphics tools as latexml-oxide's own
+# images (its Dockerfile's `texbase` stage).
+ENV TZ=Etc/UTC DEBIAN_FRONTEND=noninteractive
+RUN set -ex && apt-get update -qq && apt-get install -qy --no-install-recommends \
+  tzdata \
+  ca-certificates \
+  curl \
   texlive \
   texlive-fonts-extra \
   texlive-lang-all \
@@ -25,64 +33,109 @@ RUN set -ex && apt-get update -qq && apt-get install -qy \
   texlive-science \
   texlive-pictures \
   texlive-pstricks \
-  texlive-publishers
-
-# latexml dependencies
-RUN set -ex && apt-get update -qq && apt-get install -qy \
-  build-essential \
-  git \
+  texlive-publishers \
+  ghostscript \
   imagemagick \
-  libarchive-zip-perl \
-  libdb-dev \
-  libfile-which-perl \
-  libimage-magick-perl \
-  libimage-size-perl \
-  libio-string-perl \
-  libjson-xs-perl \
-  libparse-recdescent-perl \
-  libtext-unidecode-perl \
-  liburi-perl \
-  libuuid-tiny-perl \
-  libwww-perl \
-  libxml-libxml-perl \
-  libxml-libxslt-perl \
-  libxml2-dev \
-  libxslt1-dev \
-  liblocal-lib-perl \
-  make \
-  perl-doc \
-  cpanminus
+  poppler-utils \
+  mupdf-tools \
+  dvipng \
+  dvisvgm \
+  tini \
+  && rm -rf /var/lib/apt/lists/*
+# tini runs as PID 1 in front of latexml_oxide (the ar5ivist ENTRYPOINT): latexml-oxide
+# 0.8.0's converter subprocesses refuse to start when their parent is PID 1, so without
+# it every PDF/EPS figure fails to convert in a container.
+# ghostscript is explicit (only a Recommends of imagemagick): `gs` rasterizes EPS/PS
+# and is ImageMagick's PS/EPS/PDF delegate. poppler-utils gives pdftocairo and
+# mupdf-tools `mutool draw`, latexml-oxide's PDF rasterizers.
 
-# make sure perl paths are OK
-RUN eval $(perl -I$HOME/perl5/lib -Mlocal::lib)
-RUN echo 'eval "$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)"' >> ~/.bashrc
+# The image redistributes these (A)GPL tools unmodified: record, for each, the exact
+# Ubuntu source package and where to get it (as latexml-oxide's own images do).
+RUN set -e; d=/usr/local/share/doc/ar5ivist; mkdir -p "$d"; \
+    dpkg-query -W -f='${Package} ${Version} ${source:Package} ${source:Version}\n' \
+      ghostscript mupdf-tools poppler-utils > /tmp/srcpkgs; \
+    { echo "Source of the GPL/AGPL programs redistributed unmodified in this image,"; \
+      echo "as Ubuntu built them (binary package, version; source package, version, URL):"; \
+      echo; \
+      while read -r pkg ver src srcver; do \
+        echo "$pkg $ver; source $src $srcver: https://launchpad.net/ubuntu/+source/$src/$srcver"; \
+      done < /tmp/srcpkgs; } > "$d/THIRD-PARTY-SOURCES"; \
+    [ "$(wc -l < /tmp/srcpkgs)" -eq 3 ]; rm -f /tmp/srcpkgs; cat "$d/THIRD-PARTY-SOURCES"
 
-# Collect the extended ar5iv-bindings files
-ENV AR5IV_BINDINGS_COMMIT=31cd414724679cbb4bf9aa77505e40042ed2c537
-RUN rm -rf /opt/ar5iv-bindings
-RUN git clone https://github.com/dginev/ar5iv-bindings /opt/ar5iv-bindings
-WORKDIR /opt/ar5iv-bindings
-RUN git reset --hard $AR5IV_BINDINGS_COMMIT
+# latexml-oxide, from its GitHub release: the .deb for this architecture, checked
+# against the release's SHA-256 file; its notices kept (Ubuntu's image drops
+# /usr/share/doc/* but copyright, and THIRD-PARTY-NOTICES is the statically linked
+# libraries' licence record). The binary is self-contained (kernel dumps for
+# TeX Live 2022-2026, the XSLT, the RelaxNG schema and ar5iv.css are embedded).
+ARG LATEXML_OXIDE_VERSION=0.8.0
+ARG TARGETARCH
+RUN set -ex \
+ && arch="${TARGETARCH:-$(dpkg --print-architecture)}" \
+ && deb="latexml-oxide_${LATEXML_OXIDE_VERSION}-1_${arch}.deb" \
+ && base="https://github.com/dginev/latexml-oxide/releases/download/${LATEXML_OXIDE_VERSION}" \
+ && cd /tmp \
+ && curl -fsSL -o "$deb" "$base/$deb" \
+ && curl -fsSL -o "$deb.sha256" "$base/$deb.sha256" \
+ && sha256sum -c "$deb.sha256" \
+ && echo 'path-include=/usr/share/doc/latexml-oxide/*' > /etc/dpkg/dpkg.cfg.d/latexml-oxide \
+ && apt-get update -qq \
+ && apt-get install -qy --no-install-recommends "./$deb" \
+ && rm -f "$deb" "$deb.sha256" \
+ && rm -rf /var/lib/apt/lists/* \
+ && latexml_oxide --version
 
-# Install LaTeXML, at a fixed commit, via cpanminus
-RUN mkdir -p /opt/latexml
-WORKDIR /opt/latexml
-ENV LATEXML_COMMIT=b36bda7e6a677f5e232ec85eaef73c338e56669a
-RUN cpanm --notest --verbose --build-args formats https://github.com/arXiv/LaTeXML/archive/${LATEXML_COMMIT}.zip
+# Let ImageMagick read/write PS/EPS/PDF where a policy.xml blocks them, and raise its
+# resource ceilings for large arXiv figures. The same patch as latexml-oxide's images.
+RUN set -e; P=/etc/ImageMagick-6/policy.xml; if [ -f "$P" ]; then \
+      sed -i -E 's/rights="none" pattern="([XE]?PS[0-9]?|PDF)"/rights="read|write" pattern="\1"/g' "$P"; \
+      sed -i -E 's/(name="width" value=)"[^"]*"/\1"256KP"/'  "$P"; \
+      sed -i -E 's/(name="height" value=)"[^"]*"/\1"256KP"/' "$P"; \
+      sed -i -E 's/(name="area" value=)"[^"]*"/\1"4GiB"/'    "$P"; \
+      sed -i -E 's/(name="disk" value=)"[^"]*"/\1"6GiB"/'    "$P"; \
+      sed -i -E 's/(name="memory" value=)"[^"]*"/\1"4GiB"/'  "$P"; \
+      sed -i -E 's/(name="map" value=)"[^"]*"/\1"4GiB"/'     "$P"; \
+    fi
 
-# Enable imagemagick policy permissions for work with arXiv PDF/EPS files
-RUN perl -pi.bak -e 's/rights="none" pattern="([XE]?PS\d?|PDF)"/rights="read|write" pattern="$1"/g' /etc/ImageMagick-6/policy.xml
-# Extend imagemagick resource allowance to be able to create with high-quality images
-RUN perl -pi.bak -e 's/policy domain="resource" name="width" value="(\w+)"/policy domain="resource" name="width" value="126KP"/' /etc/ImageMagick-6/policy.xml
-RUN perl -pi.bak -e 's/policy domain="resource" name="height" value="(\w+)"/policy domain="resource" name="height" value="126KP"/' /etc/ImageMagick-6/policy.xml
-RUN perl -pi.bak -e 's/policy domain="resource" name="area" value="(\w+)"/policy domain="resource" name="area" value="2GiB"/' /etc/ImageMagick-6/policy.xml
-RUN perl -pi.bak -e 's/policy domain="resource" name="disk" value="(\w+)"/policy domain="resource" name="disk" value="8GiB"/' /etc/ImageMagick-6/policy.xml
-RUN perl -pi.bak -e 's/policy domain="resource" name="memory" value="(\w+)"/policy domain="resource" name="memory" value="2GiB"/' /etc/ImageMagick-6/policy.xml
-RUN perl -pi.bak -e 's/policy domain="resource" name="map" value="(\w+)"/policy domain="resource" name="map" value="2GiB"/' /etc/ImageMagick-6/policy.xml
+# Bake the TeX kernel formats for THIS image's TeX Live tree. The release binary embeds
+# formats built from the TeX Live years it was released against, and uses one only
+# for the tree it was built from; for any other tree it builds the format once into
+# the user's ~/.cache, which a fresh container starts without (~10 s per run). Dumps
+# in LATEXML_DUMP_DIR are found first, by every user, and only for the tree they were
+# built from: an image derived from this one that changes the TeX tree must re-run
+# the two --init lines below. LATEXML_FORMAT_CACHE is where a format for any other
+# tree is built: the default, ~/.cache, cannot be created for a uid with no passwd
+# entry (HOME=/), which would leave every run in the slow raw-load fallback.
+ENV LATEXML_DUMP_DIR=/usr/local/share/latexml-oxide/resources/dumps \
+    LATEXML_FORMAT_CACHE=/tmp/latexml-oxide-formats
+RUN set -ex \
+ && mkdir -p /usr/local/share/latexml-oxide/resources/dumps \
+ && cd /usr/local/share/latexml-oxide \
+ && latexml_oxide --init=plain.tex \
+ && latexml_oxide --init=latex.ltx \
+ && ls -la resources/dumps/*.dump.txt
 
-ENV MAGICK_DISK_LIMIT=2GiB
-ENV MAGICK_MEMORY_LIMIT=512MiB
-ENV MAGICK_MAP_LIMIT=1GiB
-ENV MAGICK_TIME_LIMIT=900
-ENV MAGICK_TMPDIR=/tmp
+# Build-time self-test: an ar5iv-style conversion must succeed, read the baked latex
+# format, convert an EPS figure, and write the bundled ar5iv.css beside the page, and
+# the licence notices must be installed, or the image is not built.
+RUN set -ex \
+ && test -s /usr/share/doc/latexml-oxide/THIRD-PARTY-NOTICES \
+ && mkdir -p /tmp/selftest && cd /tmp/selftest \
+ && printf '%s\n' '%!PS-Adobe-3.0 EPSF-3.0' '%%BoundingBox: 0 0 72 36' '0 0 1 setrgbcolor 0 0 72 36 rectfill' 'showpage' > fig.eps \
+ && printf '\\documentclass{article}\n\\usepackage{graphicx}\n\\begin{document}\nHello from ar5ivist, $x^2$.\n\\includegraphics{fig.eps}\n\\end{document}\n' > main.tex \
+ && latexml_oxide --preload=ar5iv.sty --format=html5 --pmml --mathtex --noinvisibletimes \
+      --css=ar5iv.css --nodefaultresources --source=main.tex --dest=html/main.html \
+ && grep -q 'Hello from ar5ivist' html/main.html \
+ && grep -q '<math' html/main.html \
+ && test -s html/ar5iv.css \
+ && test -s html/fig.png \
+ && grep -q "from $LATEXML_DUMP_DIR/latex\." main.latexml.log \
+ && cd / && rm -rf /tmp/selftest
+
 ENV TMPDIR=/tmp
+
+# tini as PID 1 (`-s`: a subreaper too, when something else is PID 1 under `docker run
+# --init`): latexml-oxide 0.8.0's image converters refuse to start when their parent is
+# PID 1, so `latexml_oxide` must not be the container's first process. A derived image
+# that sets its own ENTRYPOINT keeps tini in front of latexml_oxide.
+ENTRYPOINT ["/usr/bin/tini", "-s", "--"]
+CMD ["bash"]
