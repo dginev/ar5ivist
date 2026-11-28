@@ -40,7 +40,11 @@ RUN set -ex && apt-get update -qq && apt-get install -qy --no-install-recommends
   mupdf-tools \
   dvipng \
   dvisvgm \
+  tini \
   && rm -rf /var/lib/apt/lists/*
+# tini runs as PID 1 in front of latexml_oxide (the ar5ivist ENTRYPOINT): latexml-oxide
+# 0.8.0's converter subprocesses refuse to start when their parent is PID 1, so without
+# it every PDF/EPS figure fails to convert in a container.
 # ghostscript is explicit (only a Recommends of imagemagick): `gs` rasterizes EPS/PS
 # and is ImageMagick's PS/EPS/PDF delegate. poppler-utils gives pdftocairo and
 # mupdf-tools `mutool draw`, latexml-oxide's PDF rasterizers.

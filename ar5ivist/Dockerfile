@@ -25,7 +25,8 @@ ENV LATEXML_DISABLE_SHELL_ESCAPE=1
 # local use; arXiv's own runs are shorter. The second stylesheet is ar5iv's webfonts,
 # linked from the CDN as the Perl-based ar5ivist did.
 # continue as instructed in https://www.howtogeek.com/devops/how-to-use-docker-to-package-cli-applications/
-ENTRYPOINT ["latexml_oxide", \
+# tini as PID 1: see ar5ivist-base (figure conversion fails when latexml_oxide is PID 1).
+ENTRYPOINT ["/usr/bin/tini", "--", "latexml_oxide", \
   "--preload=ar5iv.sty", \
   "--format=html5", "--pmml", "--mathtex", \
   "--timeout=2700", \
